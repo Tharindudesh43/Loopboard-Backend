@@ -18,8 +18,6 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    // Never accept this from client input on registration — only the seed
-    // script should ever create a user with role ADMIN.
     role: {
       type: String,
       enum: ['USER', 'ADMIN'],
@@ -42,7 +40,6 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Never let a serialized user leak the password hash to the client.
 userSchema.methods.toJSON = function () {
   const obj = this.toObject();
   delete obj.passwordHash;

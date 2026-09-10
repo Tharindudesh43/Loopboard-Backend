@@ -9,13 +9,7 @@ function isValidId(id) {
 
 const MEMBER_FIELDS = 'name email';
 
-/**
- * GET /api/projects
- * Admin sees every project (so they can manage access on any of them).
- * A normal user sees only projects where they currently appear in
- * `members` — this is the single point that makes a revoked project
- * "disappear" for that user without touching any data.
- */
+//GET /api/projects
 async function listProjects(req, res) {
   try {
     const filter = req.user.role === 'ADMIN' ? {} : { members: req.user.id };
@@ -32,10 +26,7 @@ async function listProjects(req, res) {
   }
 }
 
-/**
- * POST /api/projects
- * Admin-only. Starts with no members — admin grants access afterward.
- */
+//POST /api/projects
 async function createProject(req, res) {
   try {
     const { name, description } = req.body;
@@ -59,11 +50,7 @@ async function createProject(req, res) {
   }
 }
 
-/**
- * PATCH /api/projects/:id
- * Admin-only. Edits name/description only — membership changes go
- * through the dedicated add/remove-member endpoints below.
- */
+//PATCH /api/projects/:id
 async function updateProject(req, res) {
   try {
     const { id } = req.params;
@@ -97,13 +84,8 @@ async function updateProject(req, res) {
   }
 }
 
-/**
- * DELETE /api/projects/:id
- * Admin-only. Deletes every task under this project first, then the
- * project itself — this is the one operation in the whole system that
- * actually destroys task history, by design (per the spec: project
- * deletion removes its tasks for everyone; access revocation does not).
- */
+
+//DELETE /api/projects/:id
 async function deleteProject(req, res) {
   try {
     const { id } = req.params;
@@ -126,10 +108,7 @@ async function deleteProject(req, res) {
   }
 }
 
-/**
- * POST /api/projects/:id/members
- * Admin-only. Grants a user access. Body: { userId }.
- */
+//POST /api/projects/:id/members
 async function addMember(req, res) {
   try {
     const { id } = req.params;
@@ -167,12 +146,7 @@ async function addMember(req, res) {
   }
 }
 
-/**
- * DELETE /api/projects/:id/members/:userId
- * Admin-only. Revokes access. Deliberately does NOT touch any Task
- * documents — this is what keeps task history intact if the user is
- * re-added later.
- */
+//DELETE /api/projects/:id/members/:userId
 async function removeMember(req, res) {
   try {
     const { id, userId } = req.params;

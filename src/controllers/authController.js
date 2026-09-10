@@ -11,11 +11,7 @@ function signToken(user) {
   });
 }
 
-/**
- * POST /api/auth/register
- * Creates a normal user. Role is NEVER read from the request body —
- * admins can only be created via the seed script.
- */
+//POST /api/auth/register
 async function register(req, res) {
   try {
     const { name, email, password } = req.body;
@@ -44,7 +40,7 @@ async function register(req, res) {
       name,
       email,
       passwordHash,
-      role: 'USER', // forced — see comment above
+      role: 'USER',
     });
 
     const token = signToken(user);
@@ -55,9 +51,7 @@ async function register(req, res) {
   }
 }
 
-/**
- * POST /api/auth/login
- */
+//POST /api/auth/login
 async function login(req, res) {
   try {
     const { email, password } = req.body;
@@ -66,8 +60,7 @@ async function login(req, res) {
       return res.status(400).json({ error: 'email and password are required' });
     }
 
-    // passwordHash is on the schema by default; no select:false was set,
-    // so this works directly against the model.
+  
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) {
       return res.status(401).json({ error: 'Invalid email or password' });
@@ -86,10 +79,8 @@ async function login(req, res) {
   }
 }
 
-/**
- * GET /api/auth/me
- * Requires the `auth` middleware to have already run.
- */
+
+//GET /api/auth/me
 async function me(req, res) {
   try {
     const user = await User.findById(req.user.id);
@@ -103,13 +94,8 @@ async function me(req, res) {
   }
 }
 
-/**
- * PATCH /api/auth/me
- * Lets a user update their own profile. Deliberately does NOT accept
- * `email` or `role` here — email changes would need re-verification and
- * role changes must only ever happen via the seed script, so both are
- * kept out of scope rather than half-supported.
- */
+
+//PATCH /api/auth/me
 async function updateMe(req, res) {
   try {
     const user = await User.findById(req.user.id);

@@ -7,20 +7,13 @@ function isValidId(id) {
   return mongoose.Types.ObjectId.isValid(id);
 }
 
-// Reused on every response so the frontend gets creator/assignee names,
-// not just raw ObjectIds — Mongo's equivalent of a SQL join.
+
 const POPULATE_FIELDS = [
   { path: 'creator', select: 'name email' },
   { path: 'assignedUser', select: 'name email' },
 ];
 
-/**
- * True if this user may currently see/act on the given project's tasks.
- * Admins always pass. Normal users pass only if they appear in the
- * project's `members` array right now — this is the single choke point
- * that makes "access revoked = project disappears" apply uniformly to
- * every task action below, not just the list view.
- */
+
 async function userCanAccessProject(user, projectId) {
   if (user.role === 'ADMIN') return true;
   if (!isValidId(projectId)) return false;
@@ -29,27 +22,37 @@ async function userCanAccessProject(user, projectId) {
   return project.members.some((m) => m.toString() === user.id);
 }
 
-/**
- * GET /api/tasks?projectId=<id>
- * Tasks are always scoped to a single project now — there's no more
- * global cross-project board. A normal user must currently be a member
- * of that project; an admin can view any project's tasks.
- */
+//GET /api/tasks?projectId=<id>
 async function getTasks(req, res) {
   try {
     const { projectId } = req.query;
-    if (!projectId || !isValidId(projectId)) {
+
+    if (projectId) {
+      if (!isValidId(projectId)) {
+        return res.status(400).json({ error: 'A valid projectId query parameter is required' });
+      }
+
+      const hasAccess = await userCanAccessProject(req.user, projectId);
+      if (!hasAccess) {
+        return res.status(403).json({ error: 'You do not have access to this project' });
+      }
+
+      const tasks = await Task.find({ project: projectId })
+        .sort({ createdAt: -1 })
+        .populate(POPULATE_FIELDS);
+
+      return res.json({ tasks });
+    }
+
+    // Only allow ADMINs to fetch 
+    if (req.user?.role !== 'ADMIN') {
       return res.status(400).json({ error: 'A valid projectId query parameter is required' });
     }
 
-    const hasAccess = await userCanAccessProject(req.user, projectId);
-    if (!hasAccess) {
-      return res.status(403).json({ error: 'You do not have access to this project' });
-    }
-
-    const tasks = await Task.find({ project: projectId })
+    const tasks = await Task.find({})
       .sort({ createdAt: -1 })
       .populate(POPULATE_FIELDS);
+
     return res.json({ tasks });
   } catch (err) {
     console.error('getTasks error:', err);
@@ -57,11 +60,8 @@ async function getTasks(req, res) {
   }
 }
 
-/**
- * POST /api/tasks
- * Body: { projectId, title, description }. Any current member of the
- * project (or an admin) can create a task in it. It starts unassigned.
- */
+
+//POST /api/tasks
 async function createTask(req, res) {
   try {
     const { projectId, title, description } = req.body;
@@ -95,15 +95,7 @@ async function createTask(req, res) {
   }
 }
 
-/**
- * PATCH /api/tasks/:id/assign
- * Body: { userId } — matches what the frontend actually sends.
- * (Previously this read `assignedUserId`, which the frontend never sent —
- * every admin reassignment was silently falling through to "unassign".
- * Fixed as part of this project-scoping pass.)
- * Normal users may only self-assign a currently UNASSIGNED task.
- * Admins may assign (or unassign, via userId: null) any task to any user.
- */
+//PATCH /api/tasks/:id/assign
 async function assignTask(req, res) {
   try {
     const { id } = req.params;
@@ -121,7 +113,7 @@ async function assignTask(req, res) {
       const { userId } = req.body;
 
       if (!userId) {
-        task.assignedUser = null; // admin explicitly unassigning
+        task.assignedUser = null;
       } else {
         if (!isValidId(userId)) {
           return res.status(400).json({ error: 'Invalid userId' });
@@ -146,12 +138,7 @@ async function assignTask(req, res) {
   }
 }
 
-/**
- * PATCH /api/tasks/:id/status
- * This is what the frontend's drag-and-drop calls.
- * Allowed for: the task's creator, its current assignee, or an admin —
- * and only if that person currently has access to the parent project.
- */
+//PATCH /api/tasks/:id/status
 async function updateStatus(req, res) {
   try {
     const { id } = req.params;
@@ -188,11 +175,7 @@ async function updateStatus(req, res) {
   }
 }
 
-/**
- * PATCH /api/tasks/:id
- * Edit title/description — creator or admin only, and only with current
- * access to the parent project.
- */
+//PATCH /api/tasks/:id
 async function updateTask(req, res) {
   try {
     const { id } = req.params;
@@ -225,12 +208,7 @@ async function updateTask(req, res) {
   }
 }
 
-/**
- * DELETE /api/tasks/:id
- * Creator or admin only, and only with current access to the parent
- * project. (Deleting an entire project's tasks in bulk is handled by
- * deleteProject in projectController.js, not this function.)
- */
+//DELETE /api/tasks/:id
 async function deleteTask(req, res) {
   try {
     const { id } = req.params;

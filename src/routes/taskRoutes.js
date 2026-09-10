@@ -11,7 +11,7 @@ const {
 
 const router = express.Router();
 
-router.use(auth); // every route below requires a valid JWT
+router.use(auth);
 
 router.get('/', getTasks);
 router.post('/', createTask);

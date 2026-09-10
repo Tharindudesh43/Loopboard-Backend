@@ -1,9 +1,6 @@
 const jwt = require('jsonwebtoken');
 
-/**
- * Verifies the JWT sent in the Authorization header (Bearer <token>).
- * On success, attaches { id, role } to req.user for downstream handlers.
- */
+//Verifies the JWT sent in the Authorization header
 function auth(req, res, next) {
   const header = req.headers.authorization;
 

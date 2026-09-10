@@ -2,12 +2,7 @@ const mongoose = require('mongoose');
 const User = require('../models/User');
 const Task = require('../models/Task');
 
-/**
- * GET /api/users
- * Admin-only. Powers the admin dashboard's user list and the
- * reassignment dropdown on each task. User.toJSON already strips
- * passwordHash, so nothing extra needs to happen here.
- */
+//GET /api/users
 async function listUsers(req, res) {
   try {
     const users = await User.find().sort({ createdAt: 1 });
@@ -18,15 +13,7 @@ async function listUsers(req, res) {
   }
 }
 
-/**
- * DELETE /api/users/:id
- * Admin-only. Admins can't be deleted through this endpoint (there's no
- * account-recovery flow in this assignment, so removing the only admin
- * would be unrecoverable). Deleting a user cascades: tasks they were
- * assigned keep existing but become unassigned again, and tasks they
- * created are removed entirely (a task can't meaningfully exist with no
- * creator on record).
- */
+//DELETE /api/users/:id
 async function deleteUser(req, res) {
   try {
     const { id } = req.params;

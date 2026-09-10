@@ -17,12 +17,6 @@ const projectSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
-    // A normal user must appear here to see this project or act on its
-    // tasks. Admins bypass this check entirely (see requireAdmin usage
-    // and the admin-role short-circuit in projectController/taskController).
-    // Removing a user from this array only hides the project from them —
-    // it never touches their existing tasks, which stay attached to the
-    // project for every other member and reappear if access is re-granted.
     members: [
       {
         type: mongoose.Schema.Types.ObjectId,

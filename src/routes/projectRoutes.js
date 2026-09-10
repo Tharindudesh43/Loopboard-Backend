@@ -12,9 +12,6 @@ const {
 
 const router = express.Router();
 
-// Every route requires a valid JWT. listProjects itself branches on role
-// (admin sees all, normal users see only projects they're a member of);
-// everything that creates/edits/deletes or changes membership is admin-only.
 router.get('/', auth, listProjects);
 router.post('/', auth, requireAdmin, createProject);
 router.patch('/:id', auth, requireAdmin, updateProject);

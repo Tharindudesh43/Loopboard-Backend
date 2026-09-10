@@ -17,10 +17,6 @@ const taskSchema = new mongoose.Schema(
       enum: ['TODO', 'DOING', 'DONE'],
       default: 'TODO',
     },
-    // Every task belongs to exactly one project. Access to a task is
-    // gated entirely through the parent Project's `members` array (see
-    // userCanAccessProject in taskController.js) — this field is what
-    // makes that check possible.
     project: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Project',
@@ -31,7 +27,6 @@ const taskSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
-    // null = unassigned and eligible for a normal user to self-assign
     assignedUser: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
